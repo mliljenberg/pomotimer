@@ -4,6 +4,9 @@ use clap::*;
 use std::thread::sleep;
 use std::time::Duration;
 use indicatif::{ProgressBar};
+use std::{thread, io};
+use std::io::Read;
+use std::sync::{Arc, Mutex};
 
 #[cfg(target_os = "macos")]
 static SOUND: &'static str = "Submarine";
@@ -28,6 +31,20 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
+    let mutex = Arc::new(Mutex::new(0));
+    let pause = Arc::clone(&mutex);
+
+    thread::spawn(move || {
+        loop {
+            let mut buffer = [0u8; 1];
+            match io::stdin().read(&mut buffer) {
+                Ok(_) => {
+                    *pause.lock().unwrap() ^= 1;
+                }
+                Err(error) => println!("Error: {}", error),
+            }
+        }
+    });
 
     for r in 0..cli.repeat {
         print!("\x1B[2J\x1B[1;1H");
@@ -44,6 +61,11 @@ fn main() {
         for _ in 0..deps {
             sleep(Duration::from_secs(1));
             pb.inc(1);
+            while *mutex.lock().unwrap() == 1 {
+                pb.suspend(|| {
+                    sleep(Duration::from_millis(200));
+                });
+            }
         }
         pb.finish_and_clear();
 

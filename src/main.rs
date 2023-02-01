@@ -5,7 +5,7 @@ use std::thread::sleep;
 use std::time::Duration;
 use indicatif::{ProgressBar};
 use std::{thread, io};
-use std::io::Read;
+use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
 
 #[cfg(target_os = "macos")]
@@ -53,7 +53,7 @@ fn main() {
                  format!("{} minutes", cli.stop).red(),
                  format!("{} times", cli.repeat).cyan());
         Notification::new().summary("Work Time").body("Time to start working 💻").sound_name(SOUND).timeout(5000).show().unwrap();
-        println!("\n\nTime to Work 💻, {} cycles left\n", format!("{}", cli.repeat - r).cyan());
+        println!("\n\nTime to Work 💻, {} cycles left, press ENTER to pause/restart \n", format!("{}", cli.repeat - r).cyan());
 
         let deps: i32 = cli.timer * 60;
         let pb = ProgressBar::new(deps as u64);
@@ -61,11 +61,7 @@ fn main() {
         for _ in 0..deps {
             sleep(Duration::from_secs(1));
             pb.inc(1);
-            while *mutex.lock().unwrap() == 1 {
-                pb.suspend(|| {
-                    sleep(Duration::from_millis(200));
-                });
-            }
+            user_pause(&mutex, &pb);
         }
         pb.finish_and_clear();
 
@@ -78,6 +74,7 @@ fn main() {
         for _ in 0..deps {
             sleep(Duration::from_secs(1));
             pb.inc(1);
+            user_pause(&mutex, &pb);
         }
         pb.finish_and_clear();
     }
@@ -85,4 +82,19 @@ fn main() {
     // Alert user
     println!("🎊 🎊 🎊You are done! Great work! 🎊 🎊 🎊");
     Notification::new().summary("Done!").body("🎊 🎊 🎊You are done! Great work! 🎊 🎊 🎊").sound_name(SOUND).timeout(5000).show().unwrap();
+}
+
+/*
+    If user has pressed enter we wait until the user does so again
+ */
+fn user_pause(mutex: &Arc<Mutex<i32>>, pb: &ProgressBar) {
+    while *mutex.lock().unwrap() == 1 {
+        pb.suspend(|| {
+            sleep(Duration::from_millis(200));
+        });
+        if *mutex.lock().unwrap() == 0 {
+            print!("\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K\r"); // Deletes 2 lines;
+            io::stdout().flush().unwrap();
+        }
+    }
 }

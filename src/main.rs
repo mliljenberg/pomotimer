@@ -81,8 +81,8 @@ fn main() {
         }
         pb.finish_and_clear();
     }
-    // Alert user
 
+    // Alert user
     println!("🎊 🎊 🎊You are done! Great work! 🎊 🎊 🎊");
     Notification::new().summary("Done!").body("🎊 🎊 🎊You are done! Great work! 🎊 🎊 🎊").sound_name(SOUND).timeout(5000).show().unwrap();
 }

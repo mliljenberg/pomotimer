@@ -31,7 +31,7 @@ fn main() {
 
     for r in 0..cli.repeat {
         print!("\x1B[2J\x1B[1;1H");
-        println!("Your 🍅 timer will start now! \nTimer is set for {}, break for {} and will repeat {}",
+        println!("Your 🍅 timer will start now! \nTimer is set for {} min, break for {} min and will repeat {} times",
                  format!("{} minutes", cli.timer).green(),
                  format!("{} minutes", cli.stop).red(),
                  format!("{} times", cli.repeat).cyan());

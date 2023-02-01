@@ -31,7 +31,7 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
-    let mutex = Arc::new(Mutex::new(0));
+    let mutex: Arc<Mutex<i8>> = Arc::new(Mutex::new(0));
     let pause = Arc::clone(&mutex);
 
     thread::spawn(move || {
@@ -60,8 +60,8 @@ fn main() {
         pb.inc(0);
         for _ in 0..deps {
             sleep(Duration::from_secs(1));
-            pb.inc(1);
             user_pause(&mutex, &pb);
+            pb.inc(1);
         }
         pb.finish_and_clear();
 
@@ -73,8 +73,8 @@ fn main() {
         pb.inc(0);
         for _ in 0..deps {
             sleep(Duration::from_secs(1));
-            pb.inc(1);
             user_pause(&mutex, &pb);
+            pb.inc(1);
         }
         pb.finish_and_clear();
     }
@@ -87,13 +87,13 @@ fn main() {
 /*
     If user has pressed enter we wait until the user does so again
  */
-fn user_pause(mutex: &Arc<Mutex<i32>>, pb: &ProgressBar) {
+fn user_pause(mutex: &Arc<Mutex<i8>>, pb: &ProgressBar) {
     while *mutex.lock().unwrap() == 1 {
         pb.suspend(|| {
             sleep(Duration::from_millis(200));
         });
         if *mutex.lock().unwrap() == 0 {
-            print!("\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K\r"); // Deletes 2 lines;
+            print!("\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K"); // Deletes 2 lines;
             io::stdout().flush().unwrap();
         }
     }
